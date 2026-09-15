@@ -31,6 +31,8 @@ noslop rules --register chat   # 세션 주입용 요약
 noslop hook                    # PostToolUse 훅 진입점
 ```
 
+`noslop` 은 install.sh 가 깔아 주는 콘솔 스크립트다. PATH 에 없으면 `python3 -m noslop` 으로 똑같이 쓴다.
+
 md, txt, docx, pptx 를 받는다. pptx 는 발표자 노트까지 본다. `kiwipiepy` 가 있으면 품사 다양성과 명사 나열 규칙이 켜진다.
 
 ## 판정 원칙
