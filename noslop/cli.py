@@ -27,7 +27,7 @@ TEXT_EXT = {".md", ".txt", ".markdown", ".docx", ".pptx", ".html"}
 def load_rules(profile=None):
     with open(os.environ.get("NOSLOP_RULES", DEFAULT_RULES), encoding="utf-8") as f:
         rules = yaml.safe_load(f)
-    profile = profile or os.environ.get("NOSLOP_PROFILE")
+    profile = profile or os.environ.get("NOSLOP_PROFILE") or os.path.expanduser("~/.noslop/profile.yaml")
     if profile and os.path.exists(profile):
         with open(profile, encoding="utf-8") as f:
             over = yaml.safe_load(f) or {}
