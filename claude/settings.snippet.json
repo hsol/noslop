@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {"hooks": [{"type": "command", "command": "bash ~/.noslop/hooks/session-start.sh"}]}
+    ],
+    "PostToolUse": [
+      {"matcher": "Write|Edit|MultiEdit",
+       "hooks": [{"type": "command", "command": "bash ~/.noslop/hooks/post-tool-use.sh", "timeout": 30}]}
+    ]
+  }
+}

@@ -1,0 +1,174 @@
+# noslop 규칙 정본 (SSOT)
+# 원칙: 어휘 블랙리스트를 쌓지 않는다. 구조와 통계로 판정한다.
+#   - BLOCK  : 기계 판정이 확정되는 구조. 하나라도 남으면 산출물이 나가지 않는다.
+#   - REVIEW : 통계 신호. 사람이나 판단 층이 문맥을 보고 남길 이유를 정한다.
+# 규칙을 추가할 때는 eval/ 골든 코퍼스에서 오탐률을 먼저 잰다. 오탐 1% 초과 규칙은 BLOCK에 못 들어간다.
+# 근거 표기: KF = KatFishNet(ACL 2025), LR = LREAD(2026), XD = XDAC(ACL 2025), NIKL = 국립국어원 새국어생활 2012 번역투 특집
+
+version: 1
+
+# 매체(register)별로 켜고 끄는 규칙. 기본은 prose.
+registers:   # "off" 는 따옴표 필수. YAML 이 off 를 불리언으로 읽는다
+  prose:      {description: "에세이, 블로그, 기사, 뉴스레터 본문", "off": []}
+  docs:       {description: "기술문서, 보고서, 명세, 회의록", "off": [B03, B04, R08, R10, R11]}
+  social:     {description: "소셜 게시물, 댓글", "off": [R08, R10], emoji_max: 3}
+  chat:       {description: "채팅 응답, DM, 이메일 후속", "off": [R04, R08, R10, R11]}
+  formal:     {description: "콜드메일, 대외 서식, 공문", "off": [R08]}
+
+# 판정 대상에서 제외하는 구간. 어떤 규칙도 이 안을 건드리지 않는다.
+protect:
+  - fenced_code
+  - inline_code
+  - urls
+  - quotes_double     # "직접 인용" 안
+  - numbers_units
+  - frontmatter
+
+block:
+  - id: B01
+    name: 비키보드 글리프
+    why: 사람이 키보드로 치지 않는 부호. 줄표, 화살표, 말줄임 글리프, 낫표. 문장 분리나 괄호로 바꾼다.
+    regex: "[—–―…→⇒←·•※▲●「」『』]"
+  - id: B02
+    name: 부정-대조 골격
+    why: >-
+      "A가 아니라 B다" 평행 구문. B만 평서로 쓴다. (사람 글 24편 0건 vs AI 27건, im-not-ai 통계)
+    regex: "(?:이|가|은|는|을|를)\\s*아니라\\s|처럼 보이지만 사실|문제가 아니(?:라|고)|단순(?:한|히)\\s.{1,20}(?:가|이|를|을)?\\s*(?:아니라|넘어)"
+  - id: B03
+    name: 열거 라벨
+    why: 첫째, 둘째, 셋째. 라벨을 떼고 이어 쓴다. docs 매체에서는 허용.
+    regex: "(?:^|[\\s.])(?:첫째|둘째|셋째|넷째|다섯째)\\s*[,，]"
+  - id: B04
+    name: 개수 예고 후 나열
+    why: >-
+      "N가지가 있다. A, B, C다." 개수를 선언한 뒤 그만큼 늘어놓는 구조. 단위를 보지 않고 구조만 본다.
+    structural: announce_then_enumerate
+  - id: B05
+    name: 이중 피동
+    why: 되어지다, 보여지다, 불려지다, 지어진다. 피동 하나로 줄인다.
+    regex: "되어지|보여지|불려지|잊혀지|모여지|쓰여지|여겨지"
+  - id: B06
+    name: 헛기침 도입
+    why: 본론 앞에 붙는 예고문. 지우고 첫 문장부터 내용으로 연다. 구조 규칙이라 표현 몇 개만 앵커로 잡는다.
+    regex: "(?:^|\\n)\\s*(?:사실은 이렇습니다|결론부터 말(?:하면|씀드리면)|여기서 중요한 (?:건|것은)|솔직히 말(?:하면|해서)|하나만 짚고 가면|이 글에서는 .{0,30}(?:다룹니다|살펴보겠습니다|알아보겠습니다))"
+  - id: B07
+    name: 챗봇 잔재
+    why: 대화 상대에게 하는 말이 산출물에 남은 것.
+    regex: "물론입니다|좋은 질문입니다|도움이 되셨(?:길|기를)|아래에 (?:정리|넣)었습니다|말씀하신 대로|제가 (?:조사|확인)한 \\d+건|다 열어봤"
+  - id: B08
+    name: 콜론 부제 헤딩 반복
+    why: >-
+      "X: Y" 형식 헤딩이 문서에 3개 이상. 하나의 헤딩으로 합친다.
+    structural: colon_heading_repeat
+    min: 3
+  - id: B09
+    name: 헤딩 반복 첫 문장
+    why: 헤딩 아래 첫 문장이 헤딩을 다시 말한다.
+    structural: heading_echo
+
+review:
+  - id: R01
+    name: 연결어미 뒤 쉼표율
+    why: >-
+      "하고, 하지만, 하면서," 인간 4.1% vs AI 19.8% (KF, im-not-ai). 쉼표 다섯 개 이상일 때 30% 넘으면 신호.
+    stat: connective_comma_rate
+    threshold: 0.30
+    min_commas: 5
+  - id: R02
+    name: 쉼표 포함 문장 비율
+    why: 에세이 기준 인간 26% vs LLM 61% (KF). 문장 8개 이상일 때 55% 넘으면 신호.
+    stat: comma_sentence_ratio
+    threshold: 0.55
+    min_sentences: 8
+  - id: R03
+    name: 종결어미 연속
+    why: 같은 종결어미가 4문장 연속. 리듬 단조.
+    stat: ending_run
+    threshold: 4
+  - id: R04
+    name: 문장 길이 균일
+    why: 문장 길이 변이계수가 낮으면 AI 리듬 (LR). 문장 8개 이상일 때 0.35 미만이면 신호.
+    stat: length_cv
+    threshold: 0.35
+    min_sentences: 8
+  - id: R05
+    name: 문두 접속사 밀도
+    why: 또한, 따라서, 즉, 아울러, 더욱이, 나아가, 이처럼, 한편. 문단마다 규칙적으로 나오면 신호. 1000자당 3회.
+    stat: sentence_initial_conjunction
+    per_1000: 3
+    regex: "(?:^|[.!?]\\s+)(?:또한|따라서|즉|아울러|더욱이|나아가|이처럼|한편|그러나)[,\\s]"
+  - id: R06
+    name: 번역투 조사 밀도
+    why: >-
+      "~에 대해, ~를 통해, ~에 있어서, ~로부터, ~에 의해" (NIKL). 1000자당 4회.
+    stat: density
+    per_1000: 4
+    regex: "에 대(?:해|하여|한)|를 통(?:해|하여)|을 통(?:해|하여)|에 있어(?:서)?|로부터|에 의(?:해|하여|한)"
+  - id: R07
+    name: 결산 피벗
+    why: 결론적으로, 요약하면, 정리하면, 시사하는 바, 종합하면. 문서당 2회 초과.
+    stat: count
+    max: 2
+    regex: "결론적으로|요약하(?:면|자면)|정리하(?:면|자면)|종합하(?:면|자면)|시사하는 바|주목할 만하"
+  - id: R08
+    name: 서식 장식 밀도
+    why: 볼드, 불릿, 이모지가 산문을 덮는다. 산문 매체에서 볼드 5개 초과, 불릿 줄이 전체의 40% 초과, 이모지 1개 이상.
+    stat: decoration
+    bold_max: 5
+    bullet_ratio_max: 0.4
+    emoji_max: 0
+  - id: R09
+    name: 가능-피동 연쇄
+    why: >-
+      "~할 수 있습니다", "~됩니다", "~가능합니다"가 이어지면 행위자가 사라진다. 1000자당 5회.
+    stat: density
+    per_1000: 5
+    regex: "할 수 있(?:다|습니다|어요)|가능(?:하다|합니다)|(?:되|됩)니다"
+  - id: R10
+    name: 제목의 숫자
+    why: 제목에 얹은 수량은 대개 장식. 순서 표기(1부, 3장)와 괄호 안 구조 표기는 제외.
+    structural: title_number
+  - id: R11
+    name: 정도 부사
+    why: 매우, 굉장히, 상당히, 무척, 엄청, 극도로, 진정으로, 사실상, 실질적으로. 지워서 뜻이 그대로면 장식. 1000자당 3회.
+    stat: density
+    per_1000: 3
+    regex: "매우|굉장히|상당히|무척|엄청|극도로|진정으로|사실상|실질적으로"
+  - id: R12
+    name: 무생물 주어 + 사람 동사
+    why: >-
+      "데이터가 말해준다", "기술이 묻는다", "시장이 보상한다". 행위자를 주어로 되돌린다.
+    regex: "(?:데이터|문화|시장|기술|시대|숫자|결과|구조|시스템|플랫폼)(?:이|가)\\s*(?:말|묻|부르|보상|증명|요구|가르쳐|보여)"
+  - id: R13
+    name: 형식명사 종결
+    why: >-
+      "~인 것이다", "~한 것입니다", "~다는 것이다" 결말. 문서당 3회 초과.
+    stat: count
+    max: 3
+    regex: "(?:인|한|는|다는) 것(?:이다|입니다)[.\\s]"
+  - id: R14
+    name: 한 줄 한 문장 배치
+    why: 문단마다 한 문장만 놓고 줄을 바꾸는 SNS형 리듬. 문단 6개 이상 중 70% 넘으면 신호. social 매체는 제외.
+    stat: single_sentence_paragraphs
+    threshold: 0.7
+    min_paragraphs: 6
+
+# 형태소 분석기(kiwipiepy)가 있을 때만 켜지는 정밀 규칙. 없으면 조용히 건너뛴다.
+morph:
+  - id: M01
+    name: 품사 다양성 저하
+    why: 명사 과다, 용언 빈곤 (KF AUROC 82.99). 어절 200개 이상일 때 용언 비율 12% 미만이면 신호.
+    stat: verb_ratio
+    threshold: 0.12
+    min_tokens: 200
+  - id: M02
+    name: 명사 나열(조사 생략)
+    why: 명사 4개 이상이 조사 없이 붙은 자리. "환경 생성 후 패키지 설치 확인 절차".
+    stat: noun_pile
+    min_run: 4
+
+# N2 격리용 점수. 참조 자료를 읽을 때 이 점수를 먼저 본다.
+score:
+  weights: {block: 12, review: 6, morph: 6}
+  cap: 100
+  quarantine_threshold: 40   # 이상이면 "사실만 추출해 중립 목록으로" 절차를 강제한다

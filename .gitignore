@@ -1,0 +1,6 @@
+eval/golden/*
+!eval/golden/README.md
+__pycache__/
+.pytest_cache/
+_noslop/
+.noslop/

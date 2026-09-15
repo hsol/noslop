@@ -1,0 +1,6 @@
+- id: noslop
+  name: noslop (한국어 슬롭 게이트)
+  entry: python3 -m noslop lint --block-only
+  language: python
+  files: \.(md|txt|markdown)$
+  additional_dependencies: [pyyaml]
