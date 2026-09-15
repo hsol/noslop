@@ -38,7 +38,10 @@ def announce_then_enumerate(line):
         num = _val(m.group(1))
         if num is None or not 2 <= num <= 9:
             continue
+        if re.match(r"\s*(?:이상|이하|미만|넘|정도|가량|쯤|이내|까지)", line[m.start(2) + len(unit):]):
+            continue  # "두 개 이상 있을 때" 는 개수 예고가 아니다
         tail = line[m.end():m.end() + 160]
+        tail = " ".join(re.split(r"[.!?]\s", tail, 2)[:2])  # 선언 문장과 바로 다음 문장까지만 센다
         if len(re.findall(r"[,·/]|\s및\s|\s그리고\s", tail)) >= num - 1:
             return True
     return False
@@ -64,8 +67,8 @@ def heading_echo(lines):
     """헤딩 바로 아래 첫 문장이 헤딩 어절의 60% 이상을 다시 쓰면 반복."""
     out = []
     for i, l in enumerate(lines):
-        if not T.is_heading(l):
-            continue
+        if not T.is_heading(l) or l.lstrip().startswith("# "):
+            continue  # 문서 제목(H1)은 본문 첫 줄이 제목을 되풀이하는 포맷이 흔하다
         h = set(re.findall(r"[가-힣A-Za-z]{2,}", T.heading_text(l)))
         if len(h) < 3:
             continue
