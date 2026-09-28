@@ -7,6 +7,21 @@ description: 내 산출물이 아니어도 슬롭을 보면 처리하는 반사 
 
 슬롭은 한 번 들어오면 인용을 타고 번진다. 발견한 자리에서 처리하는 습관이 파이프라인의 마지막 노드다.
 
+## 실행 위치
+
+이 문서의 `python3 -m noslop` 명령은 다음 순서로 실행 위치를 정한다.
+
+1. 현재 셸에서 `python3 -m noslop --help` 가 돌면 그대로 쓴다.
+2. 로컬 Cowork 는 Desktop Commander 로 호스트에서 실행한다.
+3. 클라우드 Cowork 는 샌드박스에 깔아서 쓴다. 산출물이 샌드박스에 있어 호스트 린터가 읽지 못한다.
+
+```
+[ -d ~/.noslop-src ] || git clone --depth 1 https://github.com/hsol/noslop ~/.noslop-src
+python3 -m pip install -e ~/.noslop-src 2>/dev/null || python3 -m pip install --break-system-packages -e ~/.noslop-src
+```
+
+rules.yaml 을 패키지 상위에서 찾으므로 editable 로 깐다. 개인 프로필(`~/.noslop/profile.yaml`)은 호스트에만 있어서 클라우드에서는 정본 규칙만 걸린다.
+
 ## 반사 규칙 (작업 중)
 
 어떤 작업이든 파일을 읽었을 때 다음을 한다. 읽은 파일이 md, txt, docx, pptx 이고 한국어 산문이면 대상이다.

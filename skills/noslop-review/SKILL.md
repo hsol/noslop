@@ -18,6 +18,21 @@ description: 이미 쓰인 한국어 글의 AI 슬롭을 제대로 걷어내는 
 
 고유명사, 제품명, 수치와 단위, 큰따옴표 안 직접 인용, 법조문, 코드와 식별자, 커밋 메시지, 표 셀. 이 안은 탐지도 윤문도 하지 않는다. 인용 안의 무생물 주어와 부사도 그대로 둔다.
 
+## 실행 위치
+
+이 문서의 `python3 -m noslop` 명령은 다음 순서로 실행 위치를 정한다.
+
+1. 현재 셸에서 `python3 -m noslop --help` 가 돌면 그대로 쓴다.
+2. 로컬 Cowork 는 Desktop Commander 로 호스트에서 실행한다.
+3. 클라우드 Cowork 는 샌드박스에 깔아서 쓴다. 산출물이 샌드박스에 있어 호스트 린터가 읽지 못한다.
+
+```
+[ -d ~/.noslop-src ] || git clone --depth 1 https://github.com/hsol/noslop ~/.noslop-src
+python3 -m pip install -e ~/.noslop-src 2>/dev/null || python3 -m pip install --break-system-packages -e ~/.noslop-src
+```
+
+rules.yaml 을 패키지 상위에서 찾으므로 editable 로 깐다. 개인 프로필(`~/.noslop/profile.yaml`)은 호스트에만 있어서 클라우드에서는 정본 규칙만 걸린다.
+
 ## 절차
 
 ### 패스 0. 입력과 매체
