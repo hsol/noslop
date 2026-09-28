@@ -7,9 +7,24 @@ description: 한국어 산출물을 처음부터 슬롭 없이 쓰는 절차. �
 
 슬롭은 지우는 것보다 안 쓰는 것이 싸다. 이 스킬은 생성 단계에서 슬롭이 들어오는 세 경로를 순서대로 막는다. 규칙의 정본은 `rules/rules.yaml` 이고, 이 문서는 절차만 적는다.
 
+## 실행 위치
+
+이 문서의 `python3 -m noslop` 명령은 다음 순서로 실행 위치를 정한다.
+
+1. 현재 셸에서 `python3 -m noslop --help` 가 돌면 그대로 쓴다.
+2. 로컬 Cowork 는 Desktop Commander 로 호스트에서 실행한다.
+3. 클라우드 Cowork 는 샌드박스에 깔아서 쓴다. 산출물이 샌드박스에 있어 호스트 린터가 읽지 못한다.
+
+```
+[ -d ~/.noslop-src ] || git clone --depth 1 https://github.com/hsol/noslop ~/.noslop-src
+python3 -m pip install -e ~/.noslop-src 2>/dev/null || python3 -m pip install --break-system-packages -e ~/.noslop-src
+```
+
+rules.yaml 을 패키지 상위에서 찾으므로 editable 로 깐다. 개인 프로필(`~/.noslop/profile.yaml`)은 호스트에만 있어서 클라우드에서는 정본 규칙만 걸린다.
+
 ## 0. 준비
 
-- 린터 위치를 확인한다. `python3 -m noslop --help` 가 돌면 된다. Cowork 에서는 Desktop Commander 로 호스트에서 실행한다 (`cowork/README.md`).
+- 린터가 도는지 확인한다. 안 돌면 위 실행 위치 절을 따른다.
 - 개인 프로필(`~/.noslop/profile.yaml`)이 있으면 자동으로 얹힌다. 없어도 정본 규칙만으로 동작한다.
 
 ## 1. 매체를 먼저 확정한다
